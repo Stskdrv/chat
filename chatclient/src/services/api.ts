@@ -7,6 +7,7 @@ export interface User {
 }
 
 export interface UserResponse {
+  data: any
   user: User
   token: string
   message: string
@@ -23,6 +24,7 @@ export interface RegisterRequest {
   password: string
 }
 export interface RegisterResponse {
+  data: any
   message: string
 }
 

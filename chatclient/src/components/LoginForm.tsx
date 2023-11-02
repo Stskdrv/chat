@@ -1,8 +1,8 @@
+import { Formik } from "formik";
+import * as Yup from 'yup';
 import { Link } from "react-router-dom";
 import { useLoginMutation } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
-import { Formik } from "formik";
-import * as Yup from 'yup';
 
 
 const LoginForm = () => {
@@ -28,7 +28,7 @@ const LoginForm = () => {
 
         await login({ password: values.password, username: values.name })
             .unwrap()
-            .then(() => toast('fulfilled'))
+            .then((res) => toast(res.message))
             .catch((e) => {
                 console.log(e);
                 toast(`${e.status} ${e.data.message}`)
@@ -73,7 +73,7 @@ const LoginForm = () => {
                                 focus:outline-none
                                 "
                                 type="submit"
-                                onClick={handleSubmit}
+                                onClick={() => handleSubmit()}
                             >
                                 {isLoading ? 'Sending' : 'Log In'}
                             </button>
