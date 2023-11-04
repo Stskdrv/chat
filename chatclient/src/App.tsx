@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
+import Messenger from './pages/messenger/Messenger';
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
   {
     path: '/register',
     element: <Register />
+  },
+  {
+    path: '/messenger',
+    element: <Messenger />
   },
 ])
 
