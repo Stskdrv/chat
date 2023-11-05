@@ -1,11 +1,17 @@
 import { Formik } from "formik";
 import * as Yup from 'yup';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../redux/authSlice";
+import Cookies from 'js-cookie';
+
 
 
 const LoginForm = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const validationSchema = Yup.object({
         name: Yup.string()
@@ -28,7 +34,14 @@ const LoginForm = () => {
 
         await login({ password: values.password, username: values.name })
             .unwrap()
-            .then((res) => toast(res.message))
+            .then((res) => {
+                console.log(res);
+                Cookies.set('token', res.token, {expires: 3});
+                Cookies.set('userId', res.id, {expires: 3});
+                dispatch(setCredentials(res));
+                toast(res.message);
+            })
+            .then(() => navigate('/'))
             .catch((e) => {
                 console.log(e);
                 toast(`${e.status} ${e.data.message}`)

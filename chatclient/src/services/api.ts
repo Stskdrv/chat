@@ -1,45 +1,41 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { RootState } from '../redux/store'
+import Cookies from 'js-cookie';
+import { ConversationInterface, UserInterface } from '../types';
 
 export interface User {
-  first_name: string
-  last_name: string
+  name: string;
 }
 
-export interface UserResponse {
-  user: User
-  token: string
-  message: string
-}
 
 export interface LoginRequest {
-  username: string | undefined
-  password: string | undefined
+  username: string | undefined;
+  password: string | undefined;
 }
 
 export interface RegisterRequest {
-  username: string
-  email: string
-  password: string
+  username: string;
+  email: string;
+  password: string;
 }
 export interface RegisterResponse {
-  message: string
+  message: string;
 }
+
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://localhost:9900/api/',
-    prepareHeaders: (headers, { getState }) => {
+    prepareHeaders: (headers) => {
       // By default, if we have a token in the store, let's use that for authenticated requests
-      const token = (getState() as RootState).auth.token
+      const token = Cookies.get('token');
       if (token) {
-        headers.set('authorization', `Bearer ${token}`)
+        headers.set('authorization', `${token}`)
       }
       return headers
     },
   }),
   endpoints: (builder) => ({
-    login: builder.mutation<UserResponse, LoginRequest>({
+    login: builder.mutation<UserInterface, LoginRequest>({
       query: (credentials) => ({
         url: 'auth/signin',
         method: 'POST',
@@ -53,10 +49,19 @@ export const api = createApi({
         body: credentials,
       }),
     }),
-    protected: builder.mutation<{ message: string }, void>({
-      query: () => 'protected',
+    getConversations: builder.mutation<ConversationInterface[], string>({
+      query: (userId) => ({
+        url: `conversation/${userId}`,
+        method: 'GET',
+      }),
+    }),
+    getUser: builder.mutation<UserInterface, string | undefined>({
+      query: (userId) => ({
+        url: `users?userId=${userId}`,
+        method: 'GET',
+      }),
     }),
   }),
 })
 
-export const { useLoginMutation, useRegisterMutation, useProtectedMutation } = api
+export const { useLoginMutation, useRegisterMutation, useGetConversationsMutation, useGetUserMutation } = api

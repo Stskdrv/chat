@@ -1,25 +1,24 @@
-import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { User } from '../services/api'
-import { RootState } from './store'
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from './store';
+import { UserInterface } from '../types';
 
 type AuthState = {
-  user: User | null
-  token: string | null
-  message: string | null
+  name: string | null
+  id: string | null
 }
 
 const slice = createSlice({
   name: 'auth',
-  initialState: { user: null, token: null } as AuthState,
+  initialState: { name: null, id: null} as AuthState,
   reducers: {
     setCredentials: (
       state,
-      { payload: { message, user, token } }: PayloadAction<{ message: string,  user: User; token: string }>
+      { payload: { username, id } }: PayloadAction<UserInterface>
     ) => {
-      state.user = user
-      state.token = token
-      state.message = message
+      state.name = username;
+      state.id = id;
+      return state;
     },
   },
 })
@@ -28,4 +27,4 @@ export const { setCredentials } = slice.actions
 
 export default slice.reducer
 
-export const selectCurrentUser = (state: RootState) => state.auth.user
+export const selectAuthData = (state: RootState) => state.auth;

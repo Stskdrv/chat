@@ -1,8 +1,31 @@
+import { useEffect } from "react";
 import Conversation from "../../components/Conversation";
 import Message from "../../components/Message";
 import OnlineChat from "../../components/OnlineChat";
+import Cookies from 'js-cookie';
+import { useGetConversationsMutation } from "../../services/api";
+import { useNavigate } from "react-router-dom";
+import { ConversationInterface } from "../../types";
 
 const Messenger = () => {
+    // const [conversations, setConversations] = useState([]);
+    const userId = Cookies.get('userId');
+    const navigate = useNavigate();
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [getСonversations, {isLoading, data: conversations, error}] = useGetConversationsMutation();
+
+    useEffect(() => {
+        if(userId) {
+            getСonversations(userId);
+        } else {
+            () => navigate('/login');
+        }
+    },[getСonversations, navigate, userId])
+
+    console.log(conversations, 'conversations');
+    
+
     return (
         <div className="flex h-[100vh] overflow-auto justify-center bg-neutral-50 ">
             <div className="flex-[3] ">
@@ -20,11 +43,11 @@ const Messenger = () => {
                             focus:bg-neutral-200
                             duration-300" 
                     />
-                    <Conversation />
-                    <Conversation />
-                    <Conversation />
-                    <Conversation />
-                    <Conversation />
+                    {
+                        conversations?.map((el: ConversationInterface) => (
+                            <Conversation key={el._id} conversation={el} userId={userId} />
+                        ))
+                    }
                 </div>
             </div>
             <div className="flex-[5]">
@@ -44,7 +67,7 @@ const Messenger = () => {
                         </textarea>
                         <button 
                             className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl text-white ml-3 mt-5 self-center"
-                            onClick={() => console.log('hehe')}
+                            onClick={() => Cookies.remove('token')}
                         >
                             Send
                         </button>

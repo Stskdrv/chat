@@ -59,6 +59,7 @@ router.post("/signin", async (req, res) => {
                     message: 'You are succesfully logged in',
                     token: `Bearer ${token}`,
                     name: candidate.username,
+                    id: candidate._id,
                 })
     
             } else {

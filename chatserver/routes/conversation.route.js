@@ -5,20 +5,34 @@ const errorHandler = require('../utils/errorHandler');
 
 
 //create conversation
-router.post('/', passport.authenticate('jwt', {session: false}), async (req,res) => {
-    const newConv = new Conversation({
-        members: [req.body.senderId, req.body.receiverId]
-    })
-
-    try{
+router.post('/', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const senderId = req.body.senderId;
+    const receiverId = req.body.receiverId;
+  
+    try {
+      // Check if a conversation already exists with the given members
+      const existingConv = await Conversation.findOne({
+        members: { $all: [senderId, receiverId] }
+      });
+  
+      if (existingConv) {
+        // Conversation already exists, return it
+        return res.status(200).json(existingConv);
+      } else {
+        // Create a new conversation
+        const newConv = new Conversation({
+          members: [senderId, receiverId]
+        });
+  
         const savedConv = await newConv.save();
-
+  
         return res.status(200).json(savedConv);
+      }
     } catch (e) {
-        console.log(e);
-        errorHandler(e, res);
+      console.log(e);
+      errorHandler(e, res);
     }
-});
+  });
 
 //get conversation
 

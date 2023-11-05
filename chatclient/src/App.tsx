@@ -1,5 +1,4 @@
 import './App.css'
-import Chat from './pages/chat/Chat';
 import Login from './pages/login/Login';
 import Register from './pages/register/Register';
 import {
@@ -9,12 +8,9 @@ import {
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import Messenger from './pages/messenger/Messenger';
+import PrivateOutlet from './utils/PrivateOutlet';
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Chat />
-  },
   {
     path: '/login',
     element: <Login />
@@ -24,8 +20,18 @@ const router = createBrowserRouter([
     element: <Register />
   },
   {
+    path: '*',
+    element: <PrivateOutlet />,
+    children: [
+      {
+        index: true,
+        element:  <Messenger />
+      }
+    ]
+  },
+  {
     path: '/messenger',
-    element: <Messenger />
+    element:  <Messenger />
   },
 ])
 
