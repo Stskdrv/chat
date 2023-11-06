@@ -2,7 +2,7 @@ const router = require('express').Router();
 const passport = require('passport');
 const Message = require('../models/Message.model');
 
-//create conversation
+//create message
 router.post('/', passport.authenticate('jwt', {session: false}), async (req,res) => {
     const newMessage = new Message(req.body)
 
@@ -16,7 +16,7 @@ router.post('/', passport.authenticate('jwt', {session: false}), async (req,res)
     }
 });
 
-//get conversation
+//get message
 
 router.get('/:conversationId', passport.authenticate('jwt', {session: false}), async (req,res) => {
    

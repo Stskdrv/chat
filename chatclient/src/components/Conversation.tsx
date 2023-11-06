@@ -14,12 +14,17 @@ const Conversation = ({ conversation, userId }: { conversation: ConversationInte
 
   }, [conversation.members, getUser, userId]);
 
-  console.log(friendData, 'friendData');
-
   return (
     <div className="flex items-center gap-3 m-2 cursor-pointer hover:bg-gray-100 rounded-xl p-2 ">
-      <img className="h-[50px] border-2 border-grey-600 rounded-full object-cover" src={personImg} alt="preson" />
-      <span className="font-normal">{friendData?.username}</span>
+      {
+        isLoading ?
+          <p>Loading...</p> :
+          (<>
+            <img className="h-[50px] border-2 border-grey-600 rounded-full object-cover" src={personImg} alt="preson" />
+            <span className="font-normal">{friendData?.username}</span>
+          </>)
+      }
+
     </div>
   )
 };

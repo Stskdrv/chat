@@ -12,3 +12,13 @@ export interface ConversationInterface {
     createdAt: string;
     updatesAt: string;
 }
+
+export interface MessageInterface {
+    _id: string;
+    conversationId: string;
+    sender: string;
+    text: string;
+    createdAt: string;
+    updatesAt: string;
+}
+

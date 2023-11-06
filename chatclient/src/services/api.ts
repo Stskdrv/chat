@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import Cookies from 'js-cookie';
-import { ConversationInterface, UserInterface } from '../types';
+import { ConversationInterface, MessageInterface, UserInterface } from '../types';
 
 export interface User {
   name: string;
@@ -55,6 +55,12 @@ export const api = createApi({
         method: 'GET',
       }),
     }),
+    getMessages: builder.mutation<MessageInterface[], string>({
+      query: (conversationId) => ({
+        url: `message/${conversationId}`,
+        method: 'GET',
+      }),
+    }),
     getUser: builder.mutation<UserInterface, string | undefined>({
       query: (userId) => ({
         url: `users?userId=${userId}`,
@@ -64,4 +70,4 @@ export const api = createApi({
   }),
 })
 
-export const { useLoginMutation, useRegisterMutation, useGetConversationsMutation, useGetUserMutation } = api
+export const { useLoginMutation, useRegisterMutation, useGetConversationsMutation, useGetUserMutation, useGetMessagesMutation } = api
