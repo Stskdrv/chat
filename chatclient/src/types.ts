@@ -19,6 +19,6 @@ export interface MessageInterface {
     sender: string;
     text: string;
     createdAt: string;
-    updatesAt: string;
+    updatedAt: string;
 }
 

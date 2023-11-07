@@ -61,6 +61,13 @@ export const api = createApi({
         method: 'GET',
       }),
     }),
+    sendMessage: builder.mutation<string, Omit<MessageInterface, '_id' | 'createdAt' | 'updatedAt' >>({
+      query: (messageObject) => ({
+        url: `message/`,
+        method: 'POST',
+        body: messageObject,
+      }),
+    }),
     getUser: builder.mutation<UserInterface, string | undefined>({
       query: (userId) => ({
         url: `users?userId=${userId}`,
@@ -70,4 +77,11 @@ export const api = createApi({
   }),
 })
 
-export const { useLoginMutation, useRegisterMutation, useGetConversationsMutation, useGetUserMutation, useGetMessagesMutation } = api
+export const { 
+  useLoginMutation, 
+  useRegisterMutation, 
+  useGetConversationsMutation, 
+  useGetUserMutation, 
+  useGetMessagesMutation,
+  useSendMessageMutation,
+} = api

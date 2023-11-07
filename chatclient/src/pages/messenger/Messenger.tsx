@@ -1,50 +1,90 @@
-import { useEffect, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useState } from "react";
 import Conversation from "../../components/Conversation";
 import Message from "../../components/Message";
 import OnlineChat from "../../components/OnlineChat";
 import Cookies from 'js-cookie';
-import { useGetConversationsMutation, useGetMessagesMutation } from "../../services/api";
+import { useGetConversationsMutation, useGetMessagesMutation, useSendMessageMutation } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { ConversationInterface, MessageInterface } from "../../types";
 import chatIcon from '../../assets/chatIcon.png';
 import { format } from "timeago.js";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { selectCurrentMessages, setCurrentMessages } from "../../redux/messagesSlice";
 
 const Messenger = () => {
-    // const [conversations, setConversations] = useState([]);
+    const dispatch = useDispatch();
+    const currentMessages = useSelector(selectCurrentMessages);
+    const [newMessage, setNewMessage] = useState<string>('');
+    const [currentChat, setCurrentChat] = useState<ConversationInterface | undefined>();
+
     const userId = Cookies.get('userId');
     const navigate = useNavigate();
 
-
-    const [getСonversations, {
+    const [getConversations, {
         isLoading: isConversationsLoading,
         data: conversations,
-        error: conversationsError
+        // error: conversationsError
     }] = useGetConversationsMutation();
 
-    const [currentChat, setCurrentChat] = useState<ConversationInterface | undefined>();
+    console.log(newMessage, 'newMessage');
+
 
     const [getMessages, {
-        isLoading: isMessagesLoading,
+        // isLoading: isMessagesLoading,
         data: messages,
-        error: messagesError
+        // error: messagesError
     }] = useGetMessagesMutation();
+
+    const [sendMessage,
+        {
+            isLoading: isNewMessageSending,
+            // data: newMessageResponse,
+            // error: newMessageError
+        }
+    ] = useSendMessageMutation();
 
     useEffect(() => {
         if (userId) {
-            getСonversations(userId);
+            getConversations(userId);
         } else {
             () => navigate('/login');
         }
-    }, [getСonversations, navigate, userId]);
+    }, [getConversations, navigate, userId]);
 
     useEffect(() => {
-      
-        currentChat && getMessages(currentChat?._id);
-       
-    }, [currentChat, getMessages])
 
-    console.log(conversations, 'conversations');
-    console.log(messages, 'messages');
+        currentChat && getMessages(currentChat?._id)
+            .then(res => {
+                if ('data' in res) {
+                    dispatch(setCurrentMessages(res.data))
+                }
+            });
+
+    }, [currentChat, dispatch, getMessages]);
+
+    // console.log(conversations, 'conversations');
+    // console.log(messages, 'messages');
+
+    const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+
+        const message = {
+            sender: userId || '',
+            text: newMessage,
+            conversationId: currentChat?._id || '',
+        };
+
+        console.log(message, 'message');
+        
+
+        sendMessage(message)
+            .unwrap()
+            .then((res) => dispatch(setCurrentMessages([...currentMessages, res])))
+            .then(() => setNewMessage(''))
+            .catch(() => toast.error('Message was not sent'));
+    };
+
 
     return (
         <div className="flex h-[100vh] overflow-auto justify-center bg-neutral-50 ">
@@ -83,11 +123,12 @@ const Messenger = () => {
                             <div className="bg-white p-[10px] m-5 rounded-xl">
                                 <div className="h-[80vh] overflow-auto">
 
-                                    {messages?.map(({text, sender, createdAt, _id}: MessageInterface) => (
-                                        <Message key={_id} text={text} createdAt={format(createdAt)} own={sender === userId} />
-                                    ))}
-
-                         
+                                    {currentMessages?.map((message: MessageInterface) => {
+                                        if (message) {
+                                            return <Message key={message._id} text={message.text} createdAt={format(message.createdAt)} own={message.sender === userId} />
+                                        }
+                                        return null;
+                                    })}
 
                                 </div>
                                 <div className="border-t border-separate mt-2" />
@@ -95,11 +136,14 @@ const Messenger = () => {
                                     <textarea
                                         className="w-[450px] bg-gray-200 focus:bg-gray-100 rounded-2xl p-3 mt-7 font-light text-black resize-none"
                                         placeholder="Just start typing ..."
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        value={newMessage}
                                     >
                                     </textarea>
                                     <button
                                         className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl text-white ml-3 mt-5 self-center"
-                                        onClick={() => Cookies.remove('token')}
+                                        onClick={handleSubmit}
+
                                     >
                                         Send
                                     </button>
@@ -116,9 +160,9 @@ const Messenger = () => {
             <div className="flex-[2]">
                 <div className="p-[10px] m-5 rounded-xl">
                     <OnlineChat />
+                    {/* <OnlineChat />
                     <OnlineChat />
-                    <OnlineChat />
-                    <OnlineChat />
+                    <OnlineChat /> */}
                 </div>
             </div>
         </div>
