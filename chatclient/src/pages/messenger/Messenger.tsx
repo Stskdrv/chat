@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useEffect, useState } from "react";
+import { MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
 import Conversation from "../../components/Conversation";
 import Message from "../../components/Message";
 import OnlineChat from "../../components/OnlineChat";
@@ -17,6 +17,7 @@ const Messenger = () => {
     const currentMessages = useSelector(selectCurrentMessages);
     const [newMessage, setNewMessage] = useState<string>('');
     const [currentChat, setCurrentChat] = useState<ConversationInterface | undefined>();
+    const scrollRef: MutableRefObject<HTMLDivElement | null> = useRef(null);
 
     const userId = Cookies.get('userId');
     const navigate = useNavigate();
@@ -65,6 +66,10 @@ const Messenger = () => {
 
     // console.log(conversations, 'conversations');
     // console.log(messages, 'messages');
+
+    useEffect(() => {
+        scrollRef.current?.scrollIntoView({behavior: 'smooth'});
+    }, [currentMessages])
 
     const handleSubmit = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
@@ -125,7 +130,9 @@ const Messenger = () => {
 
                                     {currentMessages?.map((message: MessageInterface) => {
                                         if (message) {
-                                            return <Message key={message._id} text={message.text} createdAt={format(message.createdAt)} own={message.sender === userId} />
+                                            return <div ref={scrollRef}>
+                                                <Message key={message._id} text={message.text} createdAt={format(message.createdAt)} own={message.sender === userId} />
+                                            </div>
                                         }
                                         return null;
                                     })}
