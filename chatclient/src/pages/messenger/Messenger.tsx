@@ -148,9 +148,9 @@ const Messenger = () => {
                                     >
                                     </textarea>
                                     <button
-                                        className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl text-white ml-3 mt-5 self-center"
+                                        className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl disabled:bg-gray-500 text-white ml-3 mt-5 self-center"
                                         onClick={handleSubmit}
-
+                                        disabled={!newMessage}
                                     >
                                         Send
                                     </button>
