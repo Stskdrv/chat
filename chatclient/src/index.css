@@ -1,3 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+    margin: 0;
+    min-height: 100vh; /* Set min-height to 100% of the viewport height */
+  }
+  
+  #app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  
+  .flex-container {
+    flex: 1;
+    overflow-y: auto; /* Add this to enable vertical scrolling if needed */
+  }

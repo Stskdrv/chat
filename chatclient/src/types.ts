@@ -1,6 +1,6 @@
 
 export interface UserInterface {
-    username: string;
+    name: string;
     token: string;
     message: string;
     id: string;
@@ -22,3 +22,7 @@ export interface MessageInterface {
     updatedAt: string;
 }
 
+export interface OnlineUser {
+    userId: string, 
+    soketId: string
+}
