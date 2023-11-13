@@ -32,7 +32,6 @@ const LoginForm = () => {
         await login({ password: values.password, username: values.name })
             .unwrap()
             .then((res) => {
-                console.log(res);
                 Cookies.set('token', res.token, {expires: 3});
                 Cookies.set('name', res.name, {expires: 3});
                 Cookies.set('userId', res.id, {expires: 3});

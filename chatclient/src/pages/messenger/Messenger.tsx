@@ -1,9 +1,8 @@
 import { MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react";
 import Conversation from "../../components/Conversation";
 import Message from "../../components/Message";
-import OnlineChat from "../../components/OnlineChat";
 import Cookies from 'js-cookie';
-import { useGetConversationsMutation, useGetMessagesMutation, useSendMessageMutation } from "../../services/api";
+import { useGetAllUsersQuery, useGetConversationsQuery, useGetMessagesQuery, useSendMessageMutation } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { ConversationInterface, MessageInterface, OnlineUser } from "../../types";
 import chatIcon from '../../assets/chatIcon.png';
@@ -14,6 +13,7 @@ import { selectCurrentMessages, setCurrentMessages } from "../../redux/messagesS
 import { Socket, io } from 'socket.io-client';
 import Spinner from "../../components/ui/Spinner";
 import Header from "../../components/Header";
+import User from "../../components/User";
 
 const Messenger = () => {
     const dispatch = useDispatch();
@@ -21,8 +21,7 @@ const Messenger = () => {
     const [newMessage, setNewMessage] = useState<string>('');
     const [arrivalMessage, setArrivalMessage] = useState<{ sender: string; text: string, createdAt: number } | null>(null);
     const [currentChat, setCurrentChat] = useState<ConversationInterface | undefined>();
-    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[] | undefined>();
-
+    const [onlineSocketUsers, setOnlineSocketUsers] = useState<OnlineUser[] | undefined>();
 
     const socket = useRef<Socket | null>();
 
@@ -31,16 +30,20 @@ const Messenger = () => {
     const userId = Cookies.get('userId');
     const navigate = useNavigate();
 
-    const [getConversations, {
-        isLoading: isConversationsLoading,
-        data: conversations,
-        // error: conversationsError
-    }] = useGetConversationsMutation();
+    const ConversationsQuery = useGetConversationsQuery(userId || '');
+    const AllUsersQuery = useGetAllUsersQuery('');
+
+    const otherAppUsers = AllUsersQuery.data?.filter(el => el._id !== userId);
+    console.log(otherAppUsers, 'otherAppUsers');
+    console.log(onlineSocketUsers, 'onlineSocketUsers');
+
+    const onlineAppUsers = otherAppUsers?.filter(user => onlineSocketUsers?.some(socketEl => socketEl.userId === user._id));
+    console.log(onlineAppUsers, 'onlineAppUsers');
+    
 
     useEffect(() => {
         socket.current = io('ws://localhost:9800');
         socket.current.on("getMessage", (data: { senderId: string; text: string }) => {
-            console.log(data, 'DATA');
 
             setArrivalMessage({
                 sender: data.senderId,
@@ -51,24 +54,21 @@ const Messenger = () => {
     }, []);
 
     useEffect(() => {
-        console.log(arrivalMessage, 'arrivalMessage');
-
         arrivalMessage && currentChat?.members.includes(arrivalMessage.sender) &&
             dispatch(setCurrentMessages([...currentMessages, arrivalMessage]))
-    }, [arrivalMessage, currentChat])
+    }, [currentChat, arrivalMessage ])
 
     useEffect(() => {
         socket.current?.emit("addUser", userId);
-        socket.current?.emit("getUsers", (users: OnlineUser[]) => {
-            setOnlineUsers(users);
+        
+        socket.current?.on('getUsers', (users: OnlineUser[]) => {
+            console.log('getUsers', users);
+            
+            setOnlineSocketUsers(users);
         });
-    }, [userId]);
+    }, [userId, socket]);
 
-    const [getMessages, {
-        // isLoading: isMessagesLoading,
-        data: messages,
-        // error: messagesError
-    }] = useGetMessagesMutation();
+    const MessagesQuery = useGetMessagesQuery(currentChat?._id || '');
 
     const [sendMessage,
         {
@@ -79,22 +79,22 @@ const Messenger = () => {
 
     useEffect(() => {
         if (userId) {
-            getConversations(userId);
+            ConversationsQuery.refetch();
         } else {
             () => navigate('/login');
         }
-    }, [getConversations, navigate, userId]);
+    }, [navigate, userId]);
 
     useEffect(() => {
 
-        currentChat && getMessages(currentChat?._id)
+        currentChat && MessagesQuery.refetch()
             .then(res => {
                 if ('data' in res) {
                     dispatch(setCurrentMessages(res.data))
                 }
             });
 
-    }, [currentChat, dispatch, getMessages]);
+    }, [currentChat]);
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -129,7 +129,7 @@ const Messenger = () => {
     return (
         <div>
             <Header />
-            <div className="flex h-[95vh] overflow-auto justify-center bg-neutral-50 ">
+            <div className="flex h-[93vh] overflow-auto justify-center bg-neutral-50 ">
                 <div className="flex-[3] ">
                     <div className="p-[10px] m-5 rounded-xl">
                         <input
@@ -145,10 +145,10 @@ const Messenger = () => {
                             focus:bg-neutral-200
                             duration-300"
                         />
-                        {isConversationsLoading ?
+                        {ConversationsQuery.isLoading ?
                             <p className="text-center mt-5 text-xl">Loading...</p> :
                             (
-                                conversations?.map((el: ConversationInterface) => (
+                                ConversationsQuery.data?.map((el: ConversationInterface) => (
                                     <div key={el?._id} onClick={() => setCurrentChat(el)}>
                                         <Conversation conversation={el} userId={userId} />
                                     </div>
@@ -163,7 +163,7 @@ const Messenger = () => {
                         currentChat ?
                             (
                                 <div className="bg-white p-[10px] m-5 rounded-xl">
-                                    <div className="overflow-auto">
+                                    <div className="overflow-auto h-[70vh] p-5 ">
 
                                         {currentMessages?.map((message: MessageInterface) => {
                                             if (message) {
@@ -205,19 +205,31 @@ const Messenger = () => {
 
                 </div>
                 <div className="flex-[2]">
+                    <div className="flex-col">
                     <div className="p-[10px] m-5 rounded-xl">
+                    Our Users List:
                         {
-                            onlineUsers?.map((user: OnlineUser) => (
-                                <OnlineChat />
+                            otherAppUsers?.map(({ username, _id }) => (
+                                <User key={_id} name={username} />
                             ))
                         }
-
-                        {/* <OnlineChat />
-                    <OnlineChat />
-                    <OnlineChat /> */}
                     </div>
+                    <div className="p-[10px] m-5 rounded-xl">
+                    Our Online Users List:
+                        {   onlineAppUsers?.length ? (
+                            onlineAppUsers?.map(({ username, _id }) => (
+                                <User isOnline key={_id + 'online'} name={username} />
+                            ))
+                        ) : 
+                        <p className="text-gray-400 font-light text-sm mt-5">'Seems like only you is Online:('</p>
+                        }
+                    </div>
+                    </div>
+                   
+                    <div className="p-[10px] m-5 rounded-xl">
                 </div>
             </div>
+        </div>
         </div>
     )
 }

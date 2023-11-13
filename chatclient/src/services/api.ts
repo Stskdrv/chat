@@ -1,10 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import Cookies from 'js-cookie';
-import { ConversationInterface, MessageInterface, UserInterface } from '../types';
-
-export interface User {
-  name: string;
-}
+import { ConversationInterface, MessageInterface, AuthInterface, UserInterface } from '../types';
 
 
 export interface LoginRequest {
@@ -35,7 +31,7 @@ export const api = createApi({
     },
   }),
   endpoints: (builder) => ({
-    login: builder.mutation<UserInterface, LoginRequest>({
+    login: builder.mutation<AuthInterface, LoginRequest>({
       query: (credentials) => ({
         url: 'auth/signin',
         method: 'POST',
@@ -49,13 +45,13 @@ export const api = createApi({
         body: credentials,
       }),
     }),
-    getConversations: builder.mutation<ConversationInterface[], string>({
+    getConversations: builder.query<ConversationInterface[], string>({
       query: (userId) => ({
         url: `conversation/${userId}`,
         method: 'GET',
       }),
     }),
-    getMessages: builder.mutation<MessageInterface[], string>({
+    getMessages: builder.query<MessageInterface[], string>({
       query: (conversationId) => ({
         url: `message/${conversationId}`,
         method: 'GET',
@@ -68,9 +64,15 @@ export const api = createApi({
         body: messageObject,
       }),
     }),
-    getUser: builder.mutation<UserInterface, string | undefined>({
+    getUser: builder.query<AuthInterface, string | undefined>({
       query: (userId) => ({
         url: `users?userId=${userId}`,
+        method: 'GET',
+      }),
+    }),
+    getAllUsers: builder.query<UserInterface[], string | undefined>({
+      query: () => ({
+        url: `users/all`,
         method: 'GET',
       }),
     }),
@@ -80,8 +82,9 @@ export const api = createApi({
 export const { 
   useLoginMutation, 
   useRegisterMutation, 
-  useGetConversationsMutation, 
-  useGetUserMutation, 
-  useGetMessagesMutation,
+  useGetConversationsQuery, 
+  useGetUserQuery, 
+  useGetMessagesQuery,
   useSendMessageMutation,
+  useGetAllUsersQuery,
 } = api
