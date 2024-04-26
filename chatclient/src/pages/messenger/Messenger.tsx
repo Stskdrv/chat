@@ -2,7 +2,7 @@ import { MouseEvent, MutableRefObject, useEffect, useRef, useState } from "react
 import Conversation from "../../components/Conversation";
 import Message from "../../components/Message";
 import Cookies from 'js-cookie';
-import { useGetAllUsersQuery, useGetConversationsQuery, useGetMessagesQuery, useSendMessageMutation } from "../../services/api";
+import { useCreateConversationMutation, useGetAllUsersQuery, useGetConversationsQuery, useGetMessagesQuery, useSendMessageMutation } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import { ConversationInterface, MessageInterface, OnlineUser } from "../../types";
 import chatIcon from '../../assets/chatIcon.png';
@@ -32,6 +32,7 @@ const Messenger = () => {
 
     const ConversationsQuery = useGetConversationsQuery(userId || '');
     const AllUsersQuery = useGetAllUsersQuery('');
+    const [createConversation, {data: newConversation, error: newConversationError}] = useCreateConversationMutation({});
 
     const otherAppUsers = AllUsersQuery.data?.filter(el => el._id !== userId);
     console.log(otherAppUsers, 'otherAppUsers');
@@ -39,7 +40,7 @@ const Messenger = () => {
 
     const onlineAppUsers = otherAppUsers?.filter(user => onlineSocketUsers?.some(socketEl => socketEl.userId === user._id));
     console.log(onlineAppUsers, 'onlineAppUsers');
-    
+
 
     useEffect(() => {
         socket.current = io('ws://localhost:9800');
@@ -56,14 +57,14 @@ const Messenger = () => {
     useEffect(() => {
         arrivalMessage && currentChat?.members.includes(arrivalMessage.sender) &&
             dispatch(setCurrentMessages([...currentMessages, arrivalMessage]))
-    }, [currentChat, arrivalMessage ])
+    }, [currentChat, arrivalMessage])
 
     useEffect(() => {
         socket.current?.emit("addUser", userId);
-        
+
         socket.current?.on('getUsers', (users: OnlineUser[]) => {
             console.log('getUsers', users);
-            
+
             setOnlineSocketUsers(users);
         });
     }, [userId, socket]);
@@ -123,6 +124,14 @@ const Messenger = () => {
             .then((res) => dispatch(setCurrentMessages([...currentMessages, res])))
             .then(() => setNewMessage(''))
             .catch(() => toast.error('Message was not sent'));
+    };
+
+    const handleInitiateConversation = async (userId: string, receiverId: string) => {
+        await createConversation({ userId, receiverId });
+        if(newConversationError) {
+            toast.error('New conversation creation failed')
+        }
+        newConversation && setCurrentChat(newConversation);
     };
 
 
@@ -206,30 +215,32 @@ const Messenger = () => {
                 </div>
                 <div className="flex-[2]">
                     <div className="flex-col">
-                    <div className="p-[10px] m-5 rounded-xl">
-                    Our Users List:
-                        {
-                            otherAppUsers?.map(({ username, _id }) => (
-                                <User key={_id} name={username} />
-                            ))
-                        }
+                        <div className="p-[10px] m-5 rounded-xl">
+                            Our Users List:
+                            {
+                                otherAppUsers?.map(({ username, _id }) => (
+                                    <div onClick={() => handleInitiateConversation(userId || '', _id)}>
+                                        <User key={_id} name={username} />
+                                    </div>
+                                ))
+                            }
+                        </div>
+                        <div className="p-[10px] m-5 rounded-xl">
+                            Our Online Users List:
+                            {onlineAppUsers?.length ? (
+                                onlineAppUsers?.map(({ username, _id }) => (
+                                    <User isOnline key={_id + 'online'} name={username} />
+                                ))
+                            ) :
+                                <p className="text-gray-400 font-light text-sm mt-5">'Seems like only you is Online:('</p>
+                            }
+                        </div>
                     </div>
+
                     <div className="p-[10px] m-5 rounded-xl">
-                    Our Online Users List:
-                        {   onlineAppUsers?.length ? (
-                            onlineAppUsers?.map(({ username, _id }) => (
-                                <User isOnline key={_id + 'online'} name={username} />
-                            ))
-                        ) : 
-                        <p className="text-gray-400 font-light text-sm mt-5">'Seems like only you is Online:('</p>
-                        }
                     </div>
-                    </div>
-                   
-                    <div className="p-[10px] m-5 rounded-xl">
                 </div>
             </div>
-        </div>
         </div>
     )
 }

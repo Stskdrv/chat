@@ -51,6 +51,16 @@ export const api = createApi({
         method: 'GET',
       }),
     }),
+    createConversation: builder.mutation<ConversationInterface, { userId?: string, receiverId?: string }>({
+      query: ({userId, receiverId}) => ({
+        url: `conversation/`,
+        method: 'POST',
+        body: {
+          senderId: userId,
+          receiverId
+        }
+      }),
+    }),
     getMessages: builder.query<MessageInterface[], string>({
       query: (conversationId) => ({
         url: `message/${conversationId}`,
@@ -83,6 +93,7 @@ export const {
   useLoginMutation, 
   useRegisterMutation, 
   useGetConversationsQuery, 
+  useCreateConversationMutation,
   useGetUserQuery, 
   useGetMessagesQuery,
   useSendMessageMutation,
