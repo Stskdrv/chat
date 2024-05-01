@@ -32,7 +32,7 @@ const Messenger = () => {
 
     const ConversationsQuery = useGetConversationsQuery(userId || '');
     const AllUsersQuery = useGetAllUsersQuery('');
-    const [createConversation, {data: newConversation, error: newConversationError}] = useCreateConversationMutation({});
+    const [createConversation,  { isLoading: isNewConversationLoading }] = useCreateConversationMutation({});
 
     const otherAppUsers = AllUsersQuery.data?.filter(el => el._id !== userId);
     console.log(otherAppUsers, 'otherAppUsers');
@@ -87,14 +87,12 @@ const Messenger = () => {
     }, [navigate, userId]);
 
     useEffect(() => {
-
         currentChat && MessagesQuery.refetch()
             .then(res => {
                 if ('data' in res) {
                     dispatch(setCurrentMessages(res.data))
                 }
-            });
-
+        });
     }, [currentChat]);
 
     useEffect(() => {
@@ -127,11 +125,27 @@ const Messenger = () => {
     };
 
     const handleInitiateConversation = async (userId: string, receiverId: string) => {
-        await createConversation({ userId, receiverId });
-        if(newConversationError) {
-            toast.error('New conversation creation failed')
+        setCurrentChat(undefined);
+        try {
+            const result = await createConversation({ userId, receiverId });
+            
+            // Check if the result contains data or error
+            if ('data' in result) {
+                // Success case
+                const data: ConversationInterface = result.data;
+                setCurrentChat(data);
+            } else if ('error' in result) {
+                // Error case
+                toast.error('New conversation creation failed');
+                console.error('Error creating conversation:', result.error);
+            } else {
+                // Unexpected result
+                console.error('Unexpected result:', result);
+            }
+        } catch (error) {
+            // Handle any unexpected errors
+            console.error('An unexpected error occurred:', error);
         }
-        newConversation && setCurrentChat(newConversation);
     };
 
 
@@ -141,19 +155,7 @@ const Messenger = () => {
             <div className="flex h-[93vh] overflow-auto justify-center bg-neutral-50 ">
                 <div className="flex-[3] ">
                     <div className="p-[10px] m-5 rounded-xl">
-                        <input
-                            placeholder="Search for friends..."
-                            className="
-                            w-[100%] 
-                            font-light
-                            p-2
-                            border-b
-                            rounded-sm
-                            border-gray-400
-                            bg-neutral-50
-                            focus:bg-neutral-200
-                            duration-300"
-                        />
+                    <h2>Active chats:</h2>
                         {ConversationsQuery.isLoading ?
                             <p className="text-center mt-5 text-xl">Loading...</p> :
                             (
@@ -167,52 +169,56 @@ const Messenger = () => {
                         }
                     </div>
                 </div>
-                <div className="flex-[6]">
-                    {
-                        currentChat ?
-                            (
-                                <div className="bg-white p-[10px] m-5 rounded-xl">
-                                    <div className="overflow-auto h-[70vh] p-5 ">
+                {
+                    isNewConversationLoading ?
+                        <Spinner height={60} width={60} color="blue-200" /> :
+                        <div className="flex-[6]">
+                            {
+                                currentChat ?
+                                    (
+                                        <div className="bg-white p-[10px] m-5 rounded-xl">
+                                            <div className="overflow-auto h-[70vh] p-5 ">
 
-                                        {currentMessages?.map((message: MessageInterface) => {
-                                            if (message) {
-                                                return <div key={message._id} ref={scrollRef}>
-                                                    <Message text={message.text} createdAt={format(message.createdAt)} own={message.sender === userId} />
-                                                </div>
-                                            }
-                                            return null;
-                                        })}
+                                                {currentMessages?.map((message: MessageInterface) => {
+                                                    if (message) {
+                                                        return <div key={message._id} ref={scrollRef}>
+                                                            <Message text={message.text} createdAt={format(message.createdAt)} own={message.sender === userId} />
+                                                        </div>
+                                                    }
+                                                    return null;
+                                                })}
 
+                                            </div>
+                                            <div className="border-t border-separate mt-2" />
+                                            <div className="flex justify-center">
+                                                <textarea
+                                                    className="w-[450px] bg-gray-200 focus:bg-gray-100 rounded-2xl p-3 mt-7 font-light text-black resize-none"
+                                                    placeholder="Just start typing ..."
+                                                    onChange={(e) => setNewMessage(e.target.value)}
+                                                    value={newMessage}
+                                                >
+                                                </textarea>
+                                                <button
+                                                    className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl disabled:bg-gray-500 text-white ml-3 mt-5 self-center"
+                                                    onClick={handleSubmit}
+                                                    disabled={!newMessage}
+                                                >
+                                                    {isNewMessageSending ?
+                                                        <Spinner height={20} width={20} color="white-200" /> :
+                                                        'Send'
+                                                    }
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) :
+                                    <div className=" flex flex-col items-center justify-center bg-white w-[100%] h-[100%] rounded-xl self-center">
+                                        <img src={chatIcon} alt='chat' className="h-[150px] w-[150px] self-center mt-[20%]" />
+                                        <p className="self-center text-5xl text-gray-300"> Please choose the chat</p>
                                     </div>
-                                    <div className="border-t border-separate mt-2" />
-                                    <div className="flex justify-center">
-                                        <textarea
-                                            className="w-[450px] bg-gray-200 focus:bg-gray-100 rounded-2xl p-3 mt-7 font-light text-black resize-none"
-                                            placeholder="Just start typing ..."
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            value={newMessage}
-                                        >
-                                        </textarea>
-                                        <button
-                                            className="w-[100px] h-[50px] bg-blue-500 active:bg-blue-800 rounded-2xl disabled:bg-gray-500 text-white ml-3 mt-5 self-center"
-                                            onClick={handleSubmit}
-                                            disabled={!newMessage}
-                                        >
-                                            {isNewMessageSending ?
-                                                <Spinner height={20} width={20} color="white-200" /> :
-                                                'Send'
-                                            }
-                                        </button>
-                                    </div>
-                                </div>
-                            ) :
-                            <div className=" flex flex-col items-center justify-center bg-white w-[100%] h-[100%] rounded-xl self-center">
-                                <img src={chatIcon} alt='chat' className="h-[150px] w-[150px] self-center mt-[20%]" />
-                                <p className="self-center text-5xl text-gray-300"> Please choose the chat</p>
-                            </div>
-                    }
+                            }
 
-                </div>
+                        </div>
+                }
                 <div className="flex-[2]">
                     <div className="flex-col">
                         <div className="p-[10px] m-5 rounded-xl">
