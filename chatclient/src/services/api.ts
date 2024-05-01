@@ -17,10 +17,12 @@ export interface RegisterResponse {
   message: string;
 }
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:9900/api/',
+    baseUrl: BASE_URL,
     prepareHeaders: (headers) => {
       // By default, if we have a token in the store, let's use that for authenticated requests
       const token = Cookies.get('token');

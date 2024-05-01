@@ -15,6 +15,8 @@ import Spinner from "../../components/ui/Spinner";
 import Header from "../../components/Header";
 import User from "../../components/User";
 
+const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL;
+
 const Messenger = () => {
     const dispatch = useDispatch();
     const currentMessages = useSelector(selectCurrentMessages);
@@ -43,7 +45,7 @@ const Messenger = () => {
 
 
     useEffect(() => {
-        socket.current = io('ws://localhost:9800');
+        socket.current = io(WS_BASE_URL);
         socket.current.on("getMessage", (data: { senderId: string; text: string }) => {
 
             setArrivalMessage({
